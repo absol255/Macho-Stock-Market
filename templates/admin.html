@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin — Macho Stock Market</title>
+
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/navigation.css">
+    <link rel="stylesheet" href="/static/css/buttons.css">
+</head>
+<body>
+
+    <div class="hero">
+        <h1 id="logo">ADMIN PANEL</h1>
+        <p class="subtitle">Manage stocks and prices.</p>
+    </div>
+
+    <nav>
+        <a class="nav" href="/">Home</a>
+        <a class="nav" href="/portfolio">Portfolio</a>
+        <a class="nav" href="/admin">Admin Panel</a>
+        <a class="nav" href="/logout">Logout</a>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <h2>Add stock</h2>
+            <input type="text" id="new-name" placeholder="Stock name" maxlength="64">
+            <input type="number" id="new-value" min="0" placeholder="Starting price">
+            <button class="button" id="add-btn" type="button">Add Stock</button>
+            <p id="admin-msg"></p>
+        </div>
+
+        <div class="card">
+            <h2>Stocks</h2>
+            <div id="admin-stock-list"></div>
+        </div>
+    </div>
+
+    <script src="/static/js/admin.js"></script>
+
+</body>
+</html>

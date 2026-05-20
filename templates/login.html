@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login — Macho Stock Market</title>
+
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/navigation.css">
+    <link rel="stylesheet" href="/static/css/buttons.css">
+</head>
+<body>
+
+    <div class="hero">
+        <h1 id="logo">ADMIN LOGIN</h1>
+        <p class="subtitle">Admins only.</p>
+    </div>
+
+    <nav>
+        <a class="nav" href="/">Home</a>
+        <a class="nav" href="/portfolio">Portfolio</a>
+        <a class="nav" href="/admin">Admin Panel</a>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <input type="text" id="username" placeholder="Username" autocomplete="username">
+            <input type="password" id="password" placeholder="Password" autocomplete="current-password">
+            <button class="button" id="login-btn" type="button">Login</button>
+            <p id="login-msg"></p>
+        </div>
+    </div>
+
+    <script>
+    document.getElementById("login-btn").addEventListener("click", function () {
+        var msg = document.getElementById("login-msg");
+        msg.textContent = "";
+
+        fetch("/api/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "same-origin",
+            body: JSON.stringify({
+                username: document.getElementById("username").value,
+                password: document.getElementById("password").value,
+            }),
+        })
+            .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+            .then(function (res) {
+                if (res.ok) {
+                    window.location.href = "/admin";
+                    return;
+                }
+                msg.textContent = res.d.error || "Login failed";
+            });
+    });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Portfolio — Macho Stock Market</title>
+
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/navigation.css">
+    <link rel="stylesheet" href="/static/css/buttons.css">
+</head>
+<body>
+
+    <div class="hero">
+        <h1 id="logo">MACHO STOCK MARKET</h1>
+        <p class="subtitle">Buy stocks. Get macho.</p>
+    </div>
+
+    <nav>
+        <a class="nav" href="/">Home</a>
+        <a class="nav" href="/portfolio">Portfolio</a>
+        <a class="nav" href="/admin">Admin Panel</a>
+    </nav>
+
+    <div class="container">
+        <div class="card" id="signin-card">
+            <h2>Portfolio</h2>
+            <p>Enter a username to start with $10,000.</p>
+            <input type="text" id="username" placeholder="Username" maxlength="64">
+            <button class="button" id="signin-btn" type="button">Enter Market</button>
+        </div>
+
+        <div class="card" id="trade-card" style="display:none">
+            <h2 id="trader-name"></h2>
+            <p>Balance: <span class="balance" id="balance">0</span></p>
+
+            <h3>Your holdings</h3>
+            <div id="holdings-list"></div>
+
+            <h3>Buy stock</h3>
+            <select id="buy-stock"></select>
+            <input type="number" id="buy-qty" min="1" value="1" placeholder="Quantity">
+            <button class="button" id="buy-btn" type="button">Buy</button>
+            <p id="trade-msg"></p>
+        </div>
+    </div>
+
+    <script src="/static/js/portfolio.js"></script>
+
+</body>
+</html>
