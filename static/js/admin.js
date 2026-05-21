@@ -55,7 +55,7 @@
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
                                 stock_name: nameInput.value.trim(),
-                                value: parseInt(valueInput.value, 10),
+                                value: parseFloat(valueInput.value, 10),
                             }),
                         })
                             .then(function (r) { return r.json(); })
@@ -91,7 +91,7 @@
 
     addBtn.addEventListener("click", function () {
         const name = newName.value.trim();
-        const value = parseInt(newValue.value, 10);
+        const value = parseFloat(newValue.value, 10);
         if (!name) return;
 
         fetch("/api/admin/stocks", {
