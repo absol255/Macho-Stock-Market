@@ -540,8 +540,6 @@ def admin_update_stock(stock_id):
 
     
     db.session.commit()
-    if int(value) == value:
-        return jsonify({"error": "THIS IS SOOOO BAD"}), 500
     return jsonify(stock.to_dict())
 
 
