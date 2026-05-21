@@ -538,7 +538,10 @@ def admin_update_stock(stock_id):
             return jsonify({"error": "Invalid value"}), 400
         record_price(stock, value)
 
+    
     db.session.commit()
+    if int(value) == value:
+        return jsonify({"error": "THIS IS SOOOO BAD"}), 500
     return jsonify(stock.to_dict())
 
 
