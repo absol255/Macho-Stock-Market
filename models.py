@@ -41,7 +41,7 @@ class Stock(db.Model):
         return {
             "id": self.id,
             "stock_name": self.stock_name,
-            "value": self.value,
+            "value": float(self.value),
         }
 
 
@@ -57,7 +57,7 @@ class StockPrice(db.Model):
         index=True,
     )
 
-    value = db.Column(db.BigInteger, nullable=False)
+    value = db.Column(db.Numeric, nullable=False)
 
     recorded_at = db.Column(
         db.DateTime,
@@ -86,7 +86,7 @@ class User(db.Model):
     )
 
     macho_bucks = db.Column(
-        db.BigInteger,
+        db.Numeric,
         default=0,
         nullable=False,
     )

@@ -16,6 +16,7 @@ import time
 import click
 import random
 import threading
+import json
 
 app = Flask(
     __name__,
@@ -53,6 +54,11 @@ def ensure_tables():
         app.logger.exception("ensure_tables failed")
         return str(exc)
 
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return float(obj)
+        return super().default(obj)
 
 def maybe_bootstrap_admin():
     """Optional: set BOOTSTRAP_ADMIN_USER + BOOTSTRAP_ADMIN_PASSWORD in Vercel once."""
@@ -96,6 +102,8 @@ def get_portfolio_user():
 
 
 def record_price(stock, value):
+    value = Decimal(str(value)).quantize(Decimal("0.01"))
+
     stock.value = value
     db.session.add(
         StockPrice(stock_id=stock.id, value=value)
@@ -165,7 +173,7 @@ def api_stocks_history():
         bucket = by_stock.setdefault(row.stock_id, [])
         if len(bucket) >= HISTORY_LIMIT:
             continue
-        bucket.append({"value": row.value, "t": row.recorded_at.isoformat()})
+        bucket.append({"value": float(row.value), "t": row.recorded_at.isoformat()})
 
     for stock_id in by_stock:
         by_stock[stock_id].reverse()
@@ -261,8 +269,8 @@ def portfolio_buy():
     if not stock:
         return jsonify({"error": "Stock not found"}), 404
 
-    cost = stock.value * quantity
-    if user.macho_bucks < cost:
+    cost = Decimal(str(stock.value)) * Decimal(quantity)
+    if Decimal(user.macho_bucks) < cost:
         return jsonify({"error": "Insufficient macho bucks"}), 400
 
     holding = Holding.query.filter_by(
@@ -274,7 +282,7 @@ def portfolio_buy():
         holding = Holding(trader_id=user.id, stock_id=stock.id, quantity=0)
         db.session.add(holding)
 
-    user.macho_bucks -= cost
+    user.macho_bucks = Decimal(str(user.macho_bucks)) - cost
     holding.quantity += quantity
     db.session.commit()
 
@@ -321,10 +329,10 @@ def portfolio_sell():
     if holding.quantity < quantity:
         return jsonify({"error": "Not enough shares"}), 400
 
-    payout = stock.value * quantity
+    payout = Decimal(str(stock.value)) * Decimal(quantity)
 
     holding.quantity -= quantity
-    user.macho_bucks += payout
+    user.macho_bucks = Decimal(str(user.macho_bucks)) + payout
 
     if holding.quantity == 0:
         db.session.delete(holding)
@@ -459,7 +467,7 @@ def admin_create_stock():
 
     return jsonify(stock.to_dict()), 201
 
-@app.route("/api/admin/addstock")
+@app.route("/api/admin/addstock", methods=["POST"])
 @login_required
 def admin_addstock():
     data = request.get_json(silent=True) or {}
@@ -484,7 +492,7 @@ def admin_addstock():
 
     user = User.query.filter_by(
         username=username
-    )
+    ).first()
     if not user:
         return jsonify({"error": "User not found"}), 404
     
@@ -502,7 +510,7 @@ def admin_addstock():
 
     return jsonify({
         "success": True,
-        "user": user,
+        "user": user.to_dict(),
         "quantity": holding.quantity,
     })
 
@@ -596,7 +604,7 @@ def update_stocks_randomly():
 
             
 try:
-    threading.Thread(target=update_stocks_randomly).start()
+    threading.Thread(target=update_stocks_randomly, daemon=True).start()
     init_db()
 except Exception:
     pass
