@@ -216,7 +216,7 @@ def portfolio_me():
     holdings = (
         db.session.query(Holding, Stock)
         .join(Stock, Holding.stock_id == Stock.id)
-        .filter(Holding.user_id == user.id, Holding.quantity > 0)
+        .filter(Holding.trader_id == user.id, Holding.quantity > 0)
         .all()
     )
 
@@ -263,12 +263,12 @@ def portfolio_buy():
         return jsonify({"error": "Insufficient macho bucks"}), 400
 
     holding = Holding.query.filter_by(
-        user_id=user.id,
+        trader_id=user.id,
         stock_id=stock.id,
     ).first()
 
     if not holding:
-        holding = Holding(user_id=user.id, stock_id=stock.id, quantity=0)
+        holding = Holding(trader_id=user.id, stock_id=stock.id, quantity=0)
         db.session.add(holding)
 
     user.macho_bucks -= cost

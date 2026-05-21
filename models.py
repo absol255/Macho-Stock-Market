@@ -121,9 +121,7 @@ class Holding(db.Model):
 
     id = db.Column(db.BigInteger, primary_key=True)
 
-    # DB column is still trader_id from the original schema
-    user_id = db.Column(
-        "trader_id",
+    trader_id = db.Column(
         db.BigInteger,
         db.ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
