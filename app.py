@@ -449,7 +449,7 @@ def admin_create_stock():
     value = data.get("value", 0)
 
     try:
-        value = int(value)
+        value = Decimal(str(value))
     except (TypeError, ValueError):
         return jsonify({"error": "Invalid value"}), 400
 
@@ -531,7 +531,7 @@ def admin_update_stock(stock_id):
 
     if "value" in data:
         try:
-            value = int(data["value"])
+            value = Decimal(str(data["value"]))
         except (TypeError, ValueError):
             return jsonify({"error": "Invalid value"}), 400
         record_price(stock, value)
@@ -597,7 +597,7 @@ def update_stocks_randomly():
                 else:
                     change = Decimal("-0.1")
 
-                record_price(stock, stock.value + change)
+                record_price(stock, Decimal(str(stock.value)) + change)
 
             db.session.commit()
             time.sleep(43200)
