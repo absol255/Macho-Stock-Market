@@ -13,6 +13,7 @@ from models import db, Stock, StockPrice, StockAdmin, User, Holding
 import os
 import time
 import click
+import random
 
 app = Flask(
     __name__,
@@ -556,7 +557,27 @@ def create_admin(username, password):
     db.session.commit()
     click.echo("Admin created: " + username)
 
+def update_stocks_randomly():
+    for stock in Stock.query.all():
+        rando = random.randint(3, 40)
+        if rando == 40:
+            record_price(stock, stock.value + 0.4)
+        if rando == 39:
+            record_price(stock, stock.value - 0.4)
+        if rando == 36 or 35:
+            record_price(stock, stock.value + 0.3)
+        if rando == 34 or 33:
+            record_price(stock, stock.value - 0.3)
+        if rando == 32 or 31 or 30 or 29:
+            record_price(stock, stock.value + 0.2)
+        if rando == 28 or 27 or 26 or 25:
+            record_price(stock, stock.value - 0.2)
+        if rando == 24 or 23 or 22 or 21 or 20 or 21 or 20 or 19 or 18 or 17 or 16 or 15:
+            record_price(stock, stock.value + 0.1)
+        if rando == 14 or 13 or 12 or 11 or 10 or 9 or 8 or 7 or 6 or 5 or 4 or 3:
+            record_price(stock, stock.value - 0.1)
 
+            
 try:
     init_db()
 except Exception:
