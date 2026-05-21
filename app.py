@@ -22,6 +22,11 @@ app = Flask(
 
 app.config.from_object(Config)
 
+if os.getenv("VERCEL"):
+    from werkzeug.middleware.proxy_fix import ProxyFix
+
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
 db.init_app(app)
 
 login_manager = LoginManager()
@@ -37,9 +42,41 @@ def init_db():
         db.create_all()
 
 
+def ensure_tables():
+    """Create tables if missing. Returns an error string or None."""
+    try:
+        db.create_all()
+        return None
+    except Exception as exc:
+        app.logger.exception("ensure_tables failed")
+        return str(exc)
+
+
+def maybe_bootstrap_admin():
+    """Optional: set BOOTSTRAP_ADMIN_USER + BOOTSTRAP_ADMIN_PASSWORD in Vercel once."""
+    user = os.getenv("BOOTSTRAP_ADMIN_USER")
+    password = os.getenv("BOOTSTRAP_ADMIN_PASSWORD")
+    if not user or not password:
+        return
+    try:
+        if StockAdmin.query.count() > 0:
+            return
+        admin = StockAdmin(username=user.strip()[:64])
+        admin.set_password(password)
+        db.session.add(admin)
+        db.session.commit()
+        app.logger.info("Bootstrapped admin user: %s", user)
+    except Exception:
+        app.logger.exception("bootstrap admin failed")
+        db.session.rollback()
+
+
 @login_manager.user_loader
 def load_user(user_id):
-    return StockAdmin.query.get(int(user_id))
+    try:
+        return db.session.get(StockAdmin, int(user_id))
+    except (TypeError, ValueError):
+        return None
 
 
 @login_manager.unauthorized_handler
@@ -250,7 +287,25 @@ def api_health():
         return jsonify({"ok": False, "error": err}), 503
     try:
         db.session.execute(db.text("SELECT 1"))
-        return jsonify({"ok": True})
+        table_err = ensure_tables()
+        maybe_bootstrap_admin()
+        admin_count = StockAdmin.query.count()
+        payload = {
+            "ok": table_err is None,
+            "db": True,
+            "tables_ok": table_err is None,
+            "admin_count": admin_count,
+        }
+        if table_err:
+            payload["error"] = table_err
+        elif admin_count == 0:
+            payload["hint"] = (
+                "No admin users. Run: flask --app app create-admin USER PASS "
+                "with production DATABASE_URL, or set BOOTSTRAP_ADMIN_USER and "
+                "BOOTSTRAP_ADMIN_PASSWORD in Vercel temporarily."
+            )
+        status = 503 if table_err else 200
+        return jsonify(payload), status
     except Exception as exc:
         return jsonify({"ok": False, "error": str(exc)}), 503
 
@@ -261,31 +316,41 @@ def api_login():
     if err:
         return jsonify({"error": err}), 503
 
+    table_err = ensure_tables()
+    if table_err:
+        return jsonify({"error": "Tables not ready: " + table_err}), 503
+
+    maybe_bootstrap_admin()
+
     data = request.get_json(silent=True) or {}
 
-    username = data.get("username")
-    password = data.get("password")
+    username = (data.get("username") or "").strip()
+    password = data.get("password") or ""
+
+    if not username or not password:
+        return jsonify({"error": "Username and password required"}), 400
 
     try:
         admin = StockAdmin.query.filter_by(username=username).first()
-    except Exception:
+    except Exception as exc:
         app.logger.exception("login database error")
-        return jsonify({
-            "error": "Database error. Check DATABASE_URL and that tables exist.",
-        }), 503
+        return jsonify({"error": "Database error: " + str(exc)}), 503
 
     if not admin:
         if not os.getenv("VERCEL"):
             time.sleep(1)
-        return jsonify({"error": "Invalid username"}), 401
+        return jsonify({
+            "error": "Invalid username (no admin in this database — check /api/health admin_count)",
+        }), 401
 
     if not admin.check_password(password):
         if not os.getenv("VERCEL"):
             time.sleep(1)
         return jsonify({"error": "Invalid password"}), 401
 
+    session.permanent = True
     login_user(admin)
-    return jsonify({"success": True})
+    return jsonify({"success": True, "username": admin.username})
 
 
 # -----------------------

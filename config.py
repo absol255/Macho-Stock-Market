@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 from dotenv import load_dotenv
 
 load_dotenv("")
@@ -30,3 +31,4 @@ class Config:
     SESSION_COOKIE_SAMESITE = "Lax"
     # Vercel serves HTTPS; secure cookies are required for sessions to stick
     SESSION_COOKIE_SECURE = bool(os.getenv("VERCEL"))
+    PERMANENT_SESSION_LIFETIME = timedelta(days=7)

@@ -48,7 +48,7 @@
     }
 
     function refresh() {
-        return fetch("/api/portfolio/me")
+        return fetch("/api/portfolio/me", { credentials: "include" })
             .then(function (r) {
                 if (r.status === 401) return null;
                 return r.json();
@@ -66,6 +66,7 @@
 
         fetch("/api/portfolio/session", {
             method: "POST",
+            credentials: "include",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username: username }),
         })
@@ -88,6 +89,7 @@
 
         fetch("/api/portfolio/buy", {
             method: "POST",
+            credentials: "include",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ stock_id: stockId, quantity: quantity }),
         })

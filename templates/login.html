@@ -37,19 +37,30 @@
         fetch("/api/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            credentials: "same-origin",
+            credentials: "include",
             body: JSON.stringify({
                 username: document.getElementById("username").value,
                 password: document.getElementById("password").value,
             }),
         })
-            .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+            .then(function (r) {
+                return r.text().then(function (text) {
+                    var d = {};
+                    try { d = JSON.parse(text); } catch (e) {
+                        d = { error: "Server error (" + r.status + "). Check Vercel function logs." };
+                    }
+                    return { ok: r.ok, d: d };
+                });
+            })
             .then(function (res) {
-                if (res.ok) {
+                if (res.ok && res.d.success) {
                     window.location.href = "/admin";
                     return;
                 }
-                msg.textContent = res.d.error || "Login failed";
+                msg.textContent = res.d.error || res.d.hint || "Login failed";
+            })
+            .catch(function () {
+                msg.textContent = "Network error — could not reach /api/login";
             });
     });
     </script>

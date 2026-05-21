@@ -10,7 +10,7 @@
     }
 
     function load() {
-        fetch("/api/admin/stocks")
+        fetch("/api/admin/stocks", { credentials: "include" })
             .then(function (r) {
                 if (r.status === 401) {
                     window.location.href = "/login";
@@ -47,6 +47,7 @@
 
                         fetch("/api/admin/stocks/" + id, {
                             method: "PATCH",
+                            credentials: "include",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
                                 stock_name: nameInput.value.trim(),
@@ -66,7 +67,7 @@
                         const id = btn.getAttribute("data-del");
                         if (!confirm("Delete this stock?")) return;
 
-                        fetch("/api/admin/stocks/" + id, { method: "DELETE" })
+                        fetch("/api/admin/stocks/" + id, { method: "DELETE", credentials: "include" })
                             .then(function () {
                                 message("Deleted.");
                                 load();
@@ -83,6 +84,7 @@
 
         fetch("/api/admin/stocks", {
             method: "POST",
+            credentials: "include",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ stock_name: name, value: value || 0 }),
         })
