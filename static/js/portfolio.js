@@ -12,6 +12,7 @@
     const buyStock = document.getElementById("buy-stock");
     const sellStock = document.getElementById("sell-stock");
     const buyQty = document.getElementById("buy-qty");
+    const sellQty = document.getElementById("sell-qty");
     const buyBtn = document.getElementById("buy-btn");
     const sellBtn = document.getElementById("sell-btn");
     const tradeMsg = document.getElementById("trade-msg");
@@ -154,8 +155,8 @@
 
     sellBtn.addEventListener("click", function () {
         tradeMsg.textContent = "";
-        const stockId = parseInt(buyStock.value, 10);
-        const quantity = parseInt(buyQty.value, 10);
+        const stockId = parseInt(sellStock.value, 10);
+        const quantity = parseInt(sellQty.value, 10);
 
         fetch("/api/portfolio/sell", {
             method: "POST",

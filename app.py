@@ -293,9 +293,6 @@ def portfolio_sell():
     stock_id = data.get("stock_id")
     quantity = data.get("quantity")
 
-    print(data)
-    print(type(stock_id), stock_id)
-    print(type(quantity), quantity)
     try:
         stock_id = int(stock_id)
         quantity = int(quantity)
