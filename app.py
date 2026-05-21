@@ -60,6 +60,8 @@ class DecimalEncoder(json.JSONEncoder):
             return float(obj)
         return super().default(obj)
 
+app.json_encoder = DecimalEncoder
+
 def maybe_bootstrap_admin():
     """Optional: set BOOTSTRAP_ADMIN_USER + BOOTSTRAP_ADMIN_PASSWORD in Vercel once."""
     user = os.getenv("BOOTSTRAP_ADMIN_USER")
@@ -239,7 +241,7 @@ def portfolio_me():
                 "stock_name": stock.stock_name,
                 "quantity": holding.quantity,
                 "value": stock.value,
-                "worth": holding.quantity * stock.value,
+                "worth": float(Decimal(stock.value) * Decimal(holding.quantity)),
             }
             for holding, stock in holdings
         ],
