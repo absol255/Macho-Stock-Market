@@ -2,18 +2,27 @@
     const signinCard = document.getElementById("signin-card");
     const tradeCard = document.getElementById("trade-card");
     const usernameInput = document.getElementById("username");
+    const bankAccNum = document.getElementById("bankaccnum");
     const signinBtn = document.getElementById("signin-btn");
-    const traderName = document.getElementById("trader-name");
+    const signinMsg = document.getElementById("signin-msg");
+    const userName = document.getElementById("user-name");
+    const bankDisplay = document.getElementById("bank-display");
     const balanceEl = document.getElementById("balance");
     const holdingsList = document.getElementById("holdings-list");
     const buyStock = document.getElementById("buy-stock");
     const buyQty = document.getElementById("buy-qty");
     const buyBtn = document.getElementById("buy-btn");
     const tradeMsg = document.getElementById("trade-msg");
+    const logoutBtn = document.getElementById("logout-btn");
 
     function showTrade() {
         signinCard.style.display = "none";
         tradeCard.style.display = "block";
+    }
+
+    function showSignin() {
+        tradeCard.style.display = "none";
+        signinCard.style.display = "block";
     }
 
     function loadStocksSelect(stocks) {
@@ -27,8 +36,9 @@
     }
 
     function renderHoldings(data) {
-        traderName.textContent = data.trader.username;
-        balanceEl.textContent = "$" + data.trader.balance;
+        userName.textContent = data.user.username;
+        bankDisplay.textContent = data.user.bank_account_number;
+        balanceEl.textContent = data.user.macho_bucks;
 
         if (!data.holdings.length) {
             holdingsList.innerHTML = "<p>No holdings yet.</p>";
@@ -54,24 +64,41 @@
                 return r.json();
             })
             .then(function (data) {
-                if (!data) return;
+                if (!data || data.error) return;
                 showTrade();
                 renderHoldings(data);
             });
     }
 
     signinBtn.addEventListener("click", function () {
+        signinMsg.textContent = "";
         const username = usernameInput.value.trim();
-        if (!username) return;
+        const bankAccountNumber = bankAccNum.value.trim();
+
+        if (!username || !bankAccountNumber) {
+            signinMsg.textContent = "Username and bank account number are required.";
+            return;
+        }
 
         fetch("/api/portfolio/session", {
             method: "POST",
             credentials: "include",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username: username }),
+            body: JSON.stringify({
+                username: username,
+                bank_account_number: bankAccountNumber,
+            }),
         })
-            .then(function (r) { return r.json(); })
-            .then(function () {
+            .then(function (r) {
+                return r.json().then(function (d) {
+                    return { ok: r.ok, d: d };
+                });
+            })
+            .then(function (res) {
+                if (!res.ok) {
+                    signinMsg.textContent = res.d.error || "Sign in failed";
+                    return;
+                }
                 return Promise.all([
                     fetch("/api/stocks").then(function (r) { return r.json(); }),
                     refresh(),
@@ -80,6 +107,18 @@
             .then(function (results) {
                 if (results && results[0]) loadStocksSelect(results[0]);
             });
+    });
+
+    logoutBtn.addEventListener("click", function () {
+        fetch("/api/portfolio/logout", {
+            method: "POST",
+            credentials: "include",
+        }).then(function () {
+            showSignin();
+            signinMsg.textContent = "";
+            usernameInput.value = "";
+            bankAccNum.value = "";
+        });
     });
 
     buyBtn.addEventListener("click", function () {

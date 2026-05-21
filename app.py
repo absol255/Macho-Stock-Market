@@ -9,7 +9,7 @@ from flask import (
 )
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from config import Config
-from models import db, Stock, StockPrice, StockAdmin, Trader, Holding
+from models import db, Stock, StockPrice, StockAdmin, User, Holding
 import os
 import time
 import click
@@ -34,7 +34,6 @@ login_manager.init_app(app)
 login_manager.login_view = "login"
 
 HISTORY_LIMIT = 48
-STARTING_BALANCE = 10_000
 
 
 def init_db():
@@ -86,11 +85,11 @@ def unauthorized():
     return redirect(url_for("login"))
 
 
-def get_trader():
-    trader_id = session.get("trader_id")
-    if not trader_id:
+def get_portfolio_user():
+    user_id = session.get("user_id")
+    if not user_id:
         return None
-    return Trader.query.get(trader_id)
+    return db.session.get(User, user_id)
 
 
 def record_price(stock, value):
@@ -179,35 +178,50 @@ def api_stocks_history():
 def portfolio_session():
     data = request.get_json(silent=True) or {}
     username = (data.get("username") or "").strip()[:64]
+    bank_raw = data.get("bank_account_number")
 
     if not username:
         return jsonify({"error": "Username required"}), 400
 
-    trader = Trader.query.filter_by(username=username).first()
-    if not trader:
-        trader = Trader(username=username, balance=STARTING_BALANCE)
-        db.session.add(trader)
-        db.session.commit()
+    try:
+        bank_account_number = int(bank_raw)
+    except (TypeError, ValueError):
+        return jsonify({"error": "Valid bank account number required"}), 400
 
-    session["trader_id"] = trader.id
-    return jsonify(trader.to_dict())
+    user = User.query.filter_by(
+        username=username,
+        bank_account_number=bank_account_number,
+    ).first()
+
+    if not user:
+        return jsonify({"error": "Invalid username or bank account number"}), 401
+
+    session.permanent = True
+    session["user_id"] = user.id
+    return jsonify(user.to_dict())
+
+
+@app.route("/api/portfolio/logout", methods=["POST"])
+def portfolio_logout():
+    session.pop("user_id", None)
+    return jsonify({"success": True})
 
 
 @app.route("/api/portfolio/me")
 def portfolio_me():
-    trader = get_trader()
-    if not trader:
+    user = get_portfolio_user()
+    if not user:
         return jsonify({"error": "Not signed in"}), 401
 
     holdings = (
         db.session.query(Holding, Stock)
         .join(Stock, Holding.stock_id == Stock.id)
-        .filter(Holding.trader_id == trader.id, Holding.quantity > 0)
+        .filter(Holding.user_id == user.id, Holding.quantity > 0)
         .all()
     )
 
     return jsonify({
-        "trader": trader.to_dict(),
+        "user": user.to_dict(),
         "holdings": [
             {
                 "stock_id": stock.id,
@@ -223,8 +237,8 @@ def portfolio_me():
 
 @app.route("/api/portfolio/buy", methods=["POST"])
 def portfolio_buy():
-    trader = get_trader()
-    if not trader:
+    user = get_portfolio_user()
+    if not user:
         return jsonify({"error": "Not signed in"}), 401
 
     data = request.get_json(silent=True) or {}
@@ -240,30 +254,30 @@ def portfolio_buy():
     if quantity <= 0:
         return jsonify({"error": "Quantity must be positive"}), 400
 
-    stock = Stock.query.get(stock_id)
+    stock = db.session.get(Stock, stock_id)
     if not stock:
         return jsonify({"error": "Stock not found"}), 404
 
     cost = stock.value * quantity
-    if trader.balance < cost:
-        return jsonify({"error": "Insufficient balance"}), 400
+    if user.macho_bucks < cost:
+        return jsonify({"error": "Insufficient macho bucks"}), 400
 
     holding = Holding.query.filter_by(
-        trader_id=trader.id,
+        user_id=user.id,
         stock_id=stock.id,
     ).first()
 
     if not holding:
-        holding = Holding(trader_id=trader.id, stock_id=stock.id, quantity=0)
+        holding = Holding(user_id=user.id, stock_id=stock.id, quantity=0)
         db.session.add(holding)
 
-    trader.balance -= cost
+    user.macho_bucks -= cost
     holding.quantity += quantity
     db.session.commit()
 
     return jsonify({
         "success": True,
-        "balance": trader.balance,
+        "macho_bucks": user.macho_bucks,
         "quantity": holding.quantity,
     })
 

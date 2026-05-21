@@ -22,14 +22,17 @@
     <div class="container">
         <div class="card" id="signin-card">
             <h2>Portfolio</h2>
-            <p>Enter a username to start with $10,000.</p>
-            <input type="text" id="username" placeholder="Username" maxlength="64">
-            <button class="button" id="signin-btn" type="button">Enter Market</button>
+            <p>Sign in with your username and bank account number.</p>
+            <input type="text" id="username" placeholder="Username" maxlength="64" autocomplete="username">
+            <input type="text" id="bankaccnum" placeholder="Bank account number" inputmode="numeric" autocomplete="off">
+            <button class="button" id="signin-btn" type="button">Sign In</button>
+            <p id="signin-msg"></p>
         </div>
 
         <div class="card" id="trade-card" style="display:none">
-            <h2 id="trader-name"></h2>
-            <p>Balance: <span class="balance" id="balance">0</span></p>
+            <h2 id="user-name"></h2>
+            <p>Bank account: <span id="bank-display"></span></p>
+            <p>Macho bucks: <span class="balance" id="balance">0</span></p>
 
             <h3>Your holdings</h3>
             <div id="holdings-list"></div>
@@ -39,6 +42,7 @@
             <input type="number" id="buy-qty" min="1" value="1" placeholder="Quantity">
             <button class="button" id="buy-btn" type="button">Buy</button>
             <p id="trade-msg"></p>
+            <button class="button" id="logout-btn" type="button">Sign Out</button>
         </div>
     </div>
 

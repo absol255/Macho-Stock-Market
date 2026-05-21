@@ -72,8 +72,8 @@ class StockPrice(db.Model):
     )
 
 
-class Trader(db.Model):
-    __tablename__ = "traders"
+class User(db.Model):
+    __tablename__ = "users"
 
     id = db.Column(db.BigInteger, primary_key=True)
 
@@ -84,9 +84,9 @@ class Trader(db.Model):
         index=True,
     )
 
-    balance = db.Column(
+    macho_bucks = db.Column(
         db.BigInteger,
-        default=10_000,
+        default=0,
         nullable=False,
     )
 
@@ -95,9 +95,14 @@ class Trader(db.Model):
         default=datetime.utcnow,
     )
 
+    bank_account_number = db.Column(
+        db.BigInteger,
+        default=999,
+    )
+
     holdings = db.relationship(
         "Holding",
-        back_populates="trader",
+        back_populates="user",
         lazy="dynamic",
         cascade="all, delete-orphan",
     )
@@ -106,7 +111,8 @@ class Trader(db.Model):
         return {
             "id": self.id,
             "username": self.username,
-            "balance": self.balance,
+            "macho_bucks": self.macho_bucks,
+            "bank_account_number": self.bank_account_number,
         }
 
 
@@ -115,9 +121,9 @@ class Holding(db.Model):
 
     id = db.Column(db.BigInteger, primary_key=True)
 
-    trader_id = db.Column(
+    user_id = db.Column(
         db.BigInteger,
-        db.ForeignKey("traders.id", ondelete="CASCADE"),
+        db.ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
@@ -131,11 +137,11 @@ class Holding(db.Model):
 
     quantity = db.Column(db.BigInteger, default=0, nullable=False)
 
-    trader = db.relationship("Trader", back_populates="holdings")
+    user = db.relationship("User", back_populates="holdings")
     stock = db.relationship("Stock")
 
     __table_args__ = (
-        db.UniqueConstraint("trader_id", "stock_id", name="uq_trader_stock"),
+        db.UniqueConstraint("user_id", "stock_id", name="uq_user_stock"),
     )
 
 
