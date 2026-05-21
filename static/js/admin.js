@@ -115,8 +115,8 @@
 
     addStockBtn.addEventListener("click", function () {
         const username = String(stockUsername.value)
-        const stockId = parseInt(addStockList.value, 10);
-        const quantity = parseInt(stockValue.value, 10);
+        const stockId = parseFloat(addStockList.value, 10);
+        const quantity = parseFloat(stockValue.value, 10);
         if (!stockId) return;
         if (!username) return;
 
