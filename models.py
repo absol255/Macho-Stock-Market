@@ -121,7 +121,9 @@ class Holding(db.Model):
 
     id = db.Column(db.BigInteger, primary_key=True)
 
+    # DB column is still trader_id from the original schema
     user_id = db.Column(
+        "trader_id",
         db.BigInteger,
         db.ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
@@ -141,7 +143,7 @@ class Holding(db.Model):
     stock = db.relationship("Stock")
 
     __table_args__ = (
-        db.UniqueConstraint("user_id", "stock_id", name="uq_user_stock"),
+        db.UniqueConstraint("trader_id", "stock_id", name="uq_trader_stock"),
     )
 
 
