@@ -4,6 +4,10 @@
     const newValue = document.getElementById("new-value");
     const addBtn = document.getElementById("add-btn");
     const adminMsg = document.getElementById("admin-msg");
+    const addStockList = document.getElementById("add-stock-list");
+    const addStockBtn = document.getElementById("add-stock-btn");
+    const stockUsername = document.getElementById("stock-username");
+    const stockValue = document.getElementById("stock-value");
 
     function message(text) {
         adminMsg.textContent = text;
@@ -74,6 +78,14 @@
                             });
                     });
                 });
+
+                addStockList.innerHTML = stocks.map(function (s) {
+                    return (
+                        '<option value="' + s.id + '">' +
+                        s.stock_name + " — $" + s.value +
+                        "</option>"
+                    );
+                }).join("");
             });
     }
 
@@ -97,6 +109,32 @@
                 newName.value = "";
                 newValue.value = "";
                 message("Stock added.");
+                load();
+            });
+    });
+
+    addStockBtn.addEventListener("click", function () {
+        const username = String(stockUsername.value)
+        const stockId = parseInt(addStockList.value, 10);
+        const quantity = parseInt(stockValue.value, 10);
+        if (!stockId) return;
+        if (!username) return;
+
+        fetch("/api/admin/addstock", {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({username: username, stock_id: stockId, quantity: quantity || 0 }),
+        })
+            .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+            .then(function (res) {
+                if (!res.ok) {
+                    message(res.d.error || "Could not add stock to machoer");
+                    return;
+                }
+                newName.value = "";
+                newValue.value = "";
+                message("Stock added to machoer.");
                 load();
             });
     });

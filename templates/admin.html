@@ -34,6 +34,15 @@
             <h2>Stocks</h2>
             <div id="admin-stock-list"></div>
         </div>
+
+        <div class="card">
+            <h2>Add Stock to Machoer</h2>
+            <input type="text" id="stock-username" placeholder="Username" maxlength="64">
+            <select id="add-stock-list"></select>
+            <input type="number" id="stock-value" min="0" placeholder="Quantity">
+            <button class="button" id="add-stock-btn" type="button">Add Stock to Machoer</button>
+            <p id="admin-msg"></p>
+        </div>
     </div>
 
     <script src="/static/js/admin.js"></script>

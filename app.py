@@ -456,6 +456,53 @@ def admin_create_stock():
 
     return jsonify(stock.to_dict()), 201
 
+@app.route("/api/admin/addstock")
+@login_required
+def admin_addstock():
+    data = request.get_json(silent=True) or {}
+
+    username = data.get("username")
+    stock_id = data.get("stock_id")
+    quantity = data.get("quantity")
+
+    try:
+        username = str(username)
+        stock_id = int(stock_id)
+        quantity = int(quantity)
+    except (TypeError, ValueError):
+        return jsonify({"error": "Invalid stock or quantity or username"}), 400
+
+    if quantity <= 0:
+        return jsonify({"error": "Quantity must be positive"}), 400
+
+    stock = db.session.get(Stock, stock_id)
+    if not stock:
+        return jsonify({"error": "Stock not found"}), 404
+
+    user = User.query.filter_by(
+        username=username
+    )
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    
+    holding = Holding.query.filter_by(
+        trader_id=user.id,
+        stock_id=stock.id,
+    ).first()
+
+    if not holding:
+        holding = Holding(trader_id=user.id, stock_id=stock.id, quantity=0)
+        db.session.add(holding)
+
+    holding.quantity += quantity
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "user": user,
+        "quantity": holding.quantity,
+    })
+
 
 @app.route("/api/admin/stocks/<int:stock_id>", methods=["PATCH"])
 @login_required
