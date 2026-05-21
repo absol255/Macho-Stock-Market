@@ -281,6 +281,58 @@ def portfolio_buy():
         "quantity": holding.quantity,
     })
 
+@app.route("/api/portfolio/sell", methods=["POST"])
+def portfolio_sell():
+    user = get_portfolio_user()
+
+    if not user:
+        return jsonify({"error": "Not signed in"}), 401
+
+    data = request.get_json(silent=True) or {}
+
+    stock_id = data.get("stock_id")
+    quantity = data.get("quantity")
+
+    try:
+        stock_id = int(stock_id)
+        quantity = int(quantity)
+    except (TypeError, ValueError):
+        return jsonify({"error": "Invalid stock or quantity"}), 400
+
+    if quantity <= 0:
+        return jsonify({"error": "Quantity must be positive"}), 400
+
+    stock = db.session.get(Stock, stock_id)
+
+    if not stock:
+        return jsonify({"error": "Stock not found"}), 404
+
+    holding = Holding.query.filter_by(
+        trader_id=user.id,
+        stock_id=stock.id,
+    ).first()
+
+    if not holding:
+        return jsonify({"error": "You do not own this stock"}), 400
+
+    if holding.quantity < quantity:
+        return jsonify({"error": "Not enough shares"}), 400
+
+    payout = stock.value * quantity
+
+    holding.quantity -= quantity
+    user.macho_bucks += payout
+
+    if holding.quantity == 0:
+        db.session.delete(holding)
+
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "macho_bucks": user.macho_bucks,
+        "quantity": holding.quantity if holding.quantity > 0 else 0,
+    })
 
 # -----------------------
 # ADMIN AUTH
