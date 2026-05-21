@@ -10,6 +10,7 @@ from flask import (
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from config import Config
 from models import db, Stock, StockPrice, StockAdmin, Trader, Holding
+import os
 import time
 import click
 
@@ -234,21 +235,53 @@ def portfolio_buy():
 # ADMIN AUTH
 # -----------------------
 
+def _config_error():
+    if not app.config.get("SECRET_KEY"):
+        return "SECRET_KEY is not set on the server"
+    if not app.config.get("SQLALCHEMY_DATABASE_URI"):
+        return "DATABASE_URL is not set on the server"
+    return None
+
+
+@app.route("/api/health")
+def api_health():
+    err = _config_error()
+    if err:
+        return jsonify({"ok": False, "error": err}), 503
+    try:
+        db.session.execute(db.text("SELECT 1"))
+        return jsonify({"ok": True})
+    except Exception as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 503
+
+
 @app.route("/api/login", methods=["POST"])
 def api_login():
+    err = _config_error()
+    if err:
+        return jsonify({"error": err}), 503
+
     data = request.get_json(silent=True) or {}
 
     username = data.get("username")
     password = data.get("password")
 
-    admin = StockAdmin.query.filter_by(username=username).first()
+    try:
+        admin = StockAdmin.query.filter_by(username=username).first()
+    except Exception:
+        app.logger.exception("login database error")
+        return jsonify({
+            "error": "Database error. Check DATABASE_URL and that tables exist.",
+        }), 503
 
     if not admin:
-        time.sleep(1)
+        if not os.getenv("VERCEL"):
+            time.sleep(1)
         return jsonify({"error": "Invalid username"}), 401
 
     if not admin.check_password(password):
-        time.sleep(1)
+        if not os.getenv("VERCEL"):
+            time.sleep(1)
         return jsonify({"error": "Invalid password"}), 401
 
     login_user(admin)
