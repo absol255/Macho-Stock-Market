@@ -14,6 +14,7 @@ import os
 import time
 import click
 import random
+import threading
 
 app = Flask(
     __name__,
@@ -576,9 +577,11 @@ def update_stocks_randomly():
             record_price(stock, stock.value + 0.1)
         if rando == 14 or 13 or 12 or 11 or 10 or 9 or 8 or 7 or 6 or 5 or 4 or 3:
             record_price(stock, stock.value - 0.1)
+        time.sleep(43200)
 
             
 try:
+    threading.Thread(target=update_stocks_randomly).start()
     init_db()
 except Exception:
     pass
