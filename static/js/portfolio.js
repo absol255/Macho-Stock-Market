@@ -167,10 +167,10 @@
             .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
             .then(function (res) {
                 if (!res.ok) {
-                    tradeMsg.textContent = res.d.error || "Buy failed";
+                    tradeMsg.textContent = res.d.error || "Sell failed";
                     return;
                 }
-                tradeMsg.textContent = "Purchase complete!";
+                tradeMsg.textContent = "Sell complete!";
                 refresh();
             });
     });
