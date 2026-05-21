@@ -19,11 +19,7 @@ class Stock(db.Model):
         index=True,
     )
 
-    value = db.Column(
-        db.Numeric,
-        default=0,
-        nullable=False,
-    )
+    value = db.Column(db.Numeric(10, 2), nullable=False)
 
     created_at = db.Column(
         db.DateTime,
@@ -57,7 +53,7 @@ class StockPrice(db.Model):
         index=True,
     )
 
-    value = db.Column(db.Numeric, nullable=False)
+    value = db.Column(db.Numeric(10, 2), nullable=False)
 
     recorded_at = db.Column(
         db.DateTime,
